@@ -1,6 +1,7 @@
 from cmu_112_graphics import *
 import random
 import time
+import pygame #for sound only
 
 def appStarted(app):
     app.spawny = app.height/2
@@ -10,6 +11,7 @@ def appStarted(app):
     app.terrain = []
     app.enemies = []
     app.test = character(5, 50, 30, app.width/4, app.height/2)
+    #app.stepSound = Sound() #doing this later
     addTerrain(app)
 
 class character:
@@ -43,6 +45,17 @@ class terrain:
         x2 = self.x + self.width/2
         y2 = self.y + self.height/2
         return (x1, y1, x2, y2)
+
+#from https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#playingSounds 
+class Sound(object):
+    def __init__(self, path):
+        self.path = path
+        self.loops = 1
+        pygame.mixer.music.load(path)
+
+    def start(self, loops=1):
+        self.loops = loops
+        pygame.mixer.music.play(loops=loops)
 
 #new terrain can be added here
 def addTerrain(app):
