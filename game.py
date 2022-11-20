@@ -2,6 +2,12 @@ from cmu_112_graphics import *
 import random
 import time
 
+class character:
+    #size
+    #speed
+
+    pass
+
 def appStarted(app):
     app.spawny = app.height/2
     app.spawnx = app.width/2
@@ -14,9 +20,9 @@ def keyPressed(app, event):
     if event.key == 's':
         app.spawny += 10
     if event.key == 'a':
-        app.spawnx -= 10
+        app.spawnx -= 5
     if event.key == 'd':
-        app.spawnx += 10
+        app.spawnx += 5
 
 def timerFired(app):
     
