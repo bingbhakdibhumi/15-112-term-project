@@ -1,113 +1,96 @@
 from cmu_112_graphics import *
+from gameObjects import *
 import random
 import time
-import pygame #for sound only
 
 def appStarted(app):
+    app.scrollX = 0 
+    app.scrollMargin = 50
     app.spawny = app.height/2
     app.spawnx = app.width/2
     app.timerDelay = 5
-    app.gravity = 1
+    app.gravity = -0.5
     app.terrain = []
     app.enemies = []
-    app.test = character(5, 50, 30, app.width/4, app.height/2)
-    #app.stepSound = Sound() #doing this later
+    app.hero = hero(50, 30, [app.scrollMargin, app.height/2])
     addTerrain(app)
-
-class character:
-    def __init__(self, speed, height, width, x, y):
-        self.speed = speed
-        self.height = height
-        self.width = width
-        self.x = x 
-        self.y = y
-
-    def moveLeft(self):
-        self.x -= self.speed
-    def moveRight(self):
-        self.x += self.speed
-    def moveUp(self):
-            self.y -= self.speed*10
-    def moveDown(self):
-        if self.y + self.height/2 < 400:
-            self.y += self.speed/2
-
-class terrain:
-    def __init__(self, height, width, x, y):
-        self.height = height
-        self.width = width
-        self.x = x 
-        self.y = y
-    
-    def getVertices(self):
-        x1 = self.x - self.width/2
-        y1 = self.y - self.height/2
-        x2 = self.x + self.width/2
-        y2 = self.y + self.height/2
-        return (x1, y1, x2, y2)
-
-#from https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#playingSounds 
-class Sound(object):
-    def __init__(self, path):
-        self.path = path
-        self.loops = 1
-        pygame.mixer.music.load(path)
-
-    def start(self, loops=1):
-        self.loops = loops
-        pygame.mixer.music.play(loops=loops)
+    app.gameOver = False
 
 #new terrain can be added here
 def addTerrain(app):
-    testLedge = terrain(30, 400, 500, 275)
+    testLedge = terrain(30, 400, [500, 100])
     app.terrain.append(testLedge)
-    floor = terrain (30, app.width, app.width/2, app.height-15)
+    floor = terrain(30, app.width, [app.width/2, app.height-15])
     app.terrain.append(floor)
 
 def drawTerrain(app, canvas):
     for element in app.terrain:
-        canvas.create_rectangle(element.getVertices(), fill='green')
+        (x1, y1, x2, y2) = element.getEdges()
+        canvas.create_rectangle(x1 - app.scrollX, y1, x2 - app.scrollX, y2, fill='green')
 
-def checkCollision(app, x, y, height, width):
-    for element in app.terrain:
-        (x1, y1, x2, y2) = element.getVertices()
-        if ((x + width/2 > x1) and (x - width/2 < x2) and
-            (y + height/2 > y1) and (y - height/2 < y1)):
-            return False
-    return True
+#https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#sidescrollerExamples 
+def sideScroll(app):
+    if (app.hero.position[0] < app.scrollX + app.scrollMargin):
+        app.scrollX = app.hero.position[0] - app.scrollMargin
+    if (app.hero.position[0] > app.scrollX + app.width - app.scrollMargin):
+        app.scrollX = app.hero.position[0] - app.width + app.scrollMargin
+
+# def checkCollision(app, x, y, height, width):
+#     for element in app.terrain:
+#         (x1, y1, x2, y2) = element.getEdges()
+#         if ((x + width/2 > x1) and (x - width/2 < x2) and
+#             (y + height/2 > y1) and (y - height/2 < y1)):
+#             return False
+#     return True
+
 
 def keyPressed(app, event):
-    if event.key == 'w':
-        app.spawny -= 10
-    if event.key == 's':
-        app.spawny += 10
-    if event.key == 'a':
-        app.spawnx -= 5
-    if event.key == 'd':
-        app.spawnx += 5
-    
-    if event.key == 'Left':
-        app.test.moveLeft()
-    if event.key == 'Right':
-        app.test.moveRight()
-    if event.key == 'Up':
-        app.test.moveUp()
+    if abs(app.hero.speedx) < 3:
+        if event.key == 'Left':
+            app.hero.speedx -= 1.5
+        if event.key == 'Right':
+            app.hero.speedx += 1.5
+    if app.hero.air == False:
+        if event.key == "Up":
+            app.hero.speedy += 15
+            app.hero.air = True
+
+def keyReleased(app, event):
+    if (event.key == 'Left') or (event.key == 'Right'):
+        app.hero.speedx = 0
+
+def sizeChanged(app):
+    sideScroll(app)
 
 def timerFired(app): 
-    if app.spawny + 25 < app.height:
-        app.spawny += app.gravity
+    if app.scrollX >= 2000:
+        app.gameOver = True
+        
+    app.hero.move()
+    sideScroll(app)
+    app.hero.jump()
 
-    if checkCollision(app, app.test.x, app.test.y, app.test.height, app.test.width):    
-        app.test.moveDown()
+    (left, top, right, bottom) = app.hero.getEdges()
+
+    if not app.hero.collidey(app.terrain):
+        app.hero.speedy += app.gravity
+
+def gameOverScreen(app, canvas):
+    canvas.create_rectangle(0, 0, app.width, app.height, fill='black')
+    canvas.create_text(app.width/2, app.height/2, text='Game Over', font='Impact 36', fill='white')
+
+def victoryScreen(app, canvas):
+    pass
 
 def redrawAll(app, canvas):
-    canvas.create_rectangle(app.spawnx-15, app.spawny-25, 
-                            app.spawnx+15, app.spawny+25, 
-                            fill='red')
-    canvas.create_rectangle(app.test.x-(app.test.width/2), app.test.y-(app.test.height/2),
-                            app.test.x+(app.test.width/2), app.test.y+(app.test.height/2),
-                            fill = 'brown')
-    drawTerrain(app, canvas)
+    if app.gameOver:
+        gameOverScreen(app, canvas)
+    else:
+        sx = app.scrollX
+        (left, top, right, bottom) = app.hero.getEdges()
+        canvas.create_rectangle(left - sx, top, right - sx, bottom,
+                                fill = 'brown')
+        drawTerrain(app, canvas)
     
 
 runApp(width=800, height=400)
