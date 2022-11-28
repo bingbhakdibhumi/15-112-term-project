@@ -17,12 +17,14 @@ class object:
 
     # https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#sidescrollerExamples
     def collidex(self, other):
-        for element in other:
-            (ax0, ay0, ax1, ay1) = self.getEdges()
-            (bx0, by0, bx1, by1) = element.getEdges()
-            if ((ax1 >= bx0) and (bx1 >= ax0)):
+        (ax0, ay0, ax1, ay1) = self.getEdges()
+        (bx0, by0, bx1, by1) = other.getEdges()
+        if ((ay1 > other.position[1]-10) and (ay0 < other.position[1]+10)):
+            if ((ax1 > bx0) and (bx1 > ax0)):
+                # self.speedx -= 2*self.speedx
                 return True
         return False
+
 
     def collidey(self, other):
         for element in other:
@@ -34,8 +36,8 @@ class object:
                         self.position[1] -= (ay1 - by0)
                         self.speedy = 0
                         self.air = False
-                    if by1 > ay0:
-                        self.speedy -= 2*self.speedy
+                    # if by1 > ay0:
+                    self.speedy -= 2*self.speedy
                     return True
         return False
 
