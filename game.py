@@ -2,12 +2,13 @@ from cmu_112_graphics import *
 from gameObjects import *
 import random
 import time
+import math
 
 def appStarted(app):
     app.dimensions = (900, 400)
     app.mapSize = 6400
     app.scrollX = 0 
-    app.scrollMargin = 50
+    app.scrollMargin = 150
     app.spawny = app.height/2
     app.spawnx = app.width/2
     app.timerDelay = 5
@@ -15,11 +16,19 @@ def appStarted(app):
     app.terrain = []
     app.terrainxy = []
     app.enemies = []
-    app.hero = hero(50, 30, [app.scrollMargin, app.height/2])
+    app.hero = hero(40, 45, [app.scrollMargin, app.height/2])
+    app.heroSize = (120, 320)
     addTerrain(app)
     app.gameOver = False
     app.background = scaleImage(app, app.loadImage('term project/images/background.jpg'), app.dimensions) #https://www.freepik.com/premium-vector/pixel-art-sky-background-with-clouds-cloudy-blue-sky-vector-8bit-game-white-background_26733992.htm
-  
+    app.sprite1 = scaleImage(app, app.loadImage('term project/images/pusheen1.png'), app.heroSize) #https://tenor.com/view/pusheen-running-cat-cute-chase-gif-16501897
+    app.sprite2 = scaleImage(app, app.loadImage('term project/images/pusheen2.png'), app.heroSize)
+    app.sprite3 = scaleImage(app, app.loadImage('term project/images/pusheen3.png'), app.heroSize)
+    app.sprite4 = scaleImage(app, app.loadImage('term project/images/pusheen4.png'), app.heroSize)
+    # https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#spritesheetsWithCropping
+    app.sprites = []
+    app.sprites.extend([app.sprite1, app.sprite2, app.sprite3, app.sprite4])
+    app.spriteCounter = 0
 
 # advanced Tkinter mini-lecture https://scs.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f19a16b4-d382-4021-b9e7-af43003eb620
 def scaleImage(app, image, dimensions):
@@ -65,12 +74,14 @@ def sideScroll(app):
 def keyPressed(app, event):
     if abs(app.hero.speedx) < 4:
         if event.key == 'Left':
+            app.spriteCounter = (1 + app.spriteCounter) % len(app.sprites)
             app.hero.speedx -= 2.5
         if event.key == 'Right':
+            app.spriteCounter = (1 + app.spriteCounter) % len(app.sprites)
             app.hero.speedx += 2.5
     if app.hero.air == False:
         if event.key == "Up":
-            app.hero.speedy += 12
+            app.hero.speedy += 13
             app.hero.air = True
     if event.key == 'r':
         appStarted(app)
@@ -91,8 +102,15 @@ def timerFired(app):
     if left <= 0:
         app.hero.position[0] += 0.1
     else:
+        # app.spriteCounter = (1 + app.spriteCounter) % len(app.sprites)
         app.hero.move()
         sideScroll(app)
+    if app.hero.air:
+        app.spriteCounter = 1
+    elif app.hero.speedx > 0:
+        app.spriteCounter = (1 + app.spriteCounter) % len(app.sprites)
+    elif app.hero.speedx < 0:
+        pass
     for element in app.terrain:
         if element.collidex(app.hero):
             app.hero.speedx -= 2*app.hero.speedx
@@ -121,9 +139,11 @@ def redrawAll(app, canvas):
     else:
         drawBackground(app, canvas)
         sx = app.scrollX
+        sprite = app.sprites[app.spriteCounter]
         (left, top, right, bottom) = app.hero.getEdges()
         canvas.create_rectangle(left - sx, top, right - sx, bottom,
                                 fill = 'brown')
+        canvas.create_image(app.hero.position[0] - sx, app.hero.position[1], image=ImageTk.PhotoImage(sprite))
         drawTerrain(app, canvas)
     
 
