@@ -1,7 +1,7 @@
 import random
 
-class object:
-    def __init__(self, height, width, position):
+class gameObject:
+    def __init__(self, width, height, position):
         self.speedx = 0
         self.speedy = 0
         self.height = height
@@ -36,13 +36,12 @@ class object:
                         self.position[1] -= (ay1 - by0)
                         self.speedy = 0
                         self.air = False
-                    # if by1 > ay0:
                     self.speedy -= 2*self.speedy
                     return True
         return False
 
 
-class hero(object):
+class hero(gameObject):
     def __init__(self, height, width, position):
         super().__init__(height, width, position)
         self.air = False
@@ -53,7 +52,7 @@ class hero(object):
         self.position[1] -= self.speedy
         
 
-class terrain(object):
+class terrain(gameObject):
     def __init__(self, height, width, position):
         super().__init__(height, width, position)
     
