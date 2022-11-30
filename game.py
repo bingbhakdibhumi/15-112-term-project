@@ -1,26 +1,34 @@
 from cmu_112_graphics import *
 from gameObjects import *
+from terrain import *
 import random
 import time
 import math
 import copy
+import statistics
 
 def appStarted(app):
     app.dimensions = (900, 400)
-    app.mapSize = 6400
+    app.mapSize = 8000
     app.scrollX = 0 
     app.scrollY = 0
-    app.scrollMargin = 150
+    app.scrollMargin = 250
     app.scrollMarginY = 50
     app.spawny = app.height/2
     app.spawnx = app.width/2
     app.timerDelay = 5
-    app.gravity = -0.5
+    app.gravity = -0.5 # jump height is 138 with -0.5 gravity and 12 jump
     app.terrain = []
-    app.terrainxy = []
     app.enemies = []
-    app.hero = hero(55, 40, [app.scrollMargin, 0.7*app.height])
+    app.numberOfHoles = 8
+    app.holes = createHoles(1000, app.mapSize-300, app.numberOfHoles, 500) #start, stop, amount, margin
+    app.numberOfPlatforms = 25
+    app.platforms = createPlatforms(1000, app.mapSize-300, app.numberOfPlatforms, 
+                                    230, 0, 145) #start, stop, amount, low, high, jumpHeight
     addTerrain(app)
+    createFloor(app)
+    createPlatform(app)
+    app.hero = character(55, 40, [app.scrollMargin, 0.7*app.height])
     app.lives = 3
     app.timePassed = 0
     app.timeLimit = 200
@@ -63,38 +71,54 @@ def drawImage(app, canvas, image, cx, cy):
 
 # new terrain can be added here
 def addTerrain(app):
-    testLedge = terrain(400, 30, [500, 230])
+    testLedge = gameObject(400, 30, [550, 230])
     app.terrain.append(testLedge)
-    floor = terrain(9000, 30, [4000, app.height-15])
-    app.terrain.append(floor)
-    wall = terrain(100, 300, [800, app.height-150])
+    # floor = gameObject(9000, 30, [4000, app.height-15])
+    # app.terrain.append(floor)
+    wall = gameObject(100, 300, [800, app.height-150])
     app.terrain.append(wall)
-    pole = terrain(40, 300, [6200, app.height-150])
+    pole = gameObject(40, 300, [app.mapSize-200, app.height-150])
     app.terrain.append(pole)
 
-# def createTerrain(app):
-#     for element in app.terrainxy:
-#         app.terrain.append(terrain(height, width, [position]))
+def createFloor(app):
+    leftEdge = -200
+    for hole in app.holes:
+        length = (hole - 100 - leftEdge)
+        midpoint = statistics.mean([leftEdge, hole-100])
+        floor = gameObject(length, 100, [midpoint, app.height])
+        app.terrain.append(floor)
+        leftEdge = (hole + 100)
+    length = (app.mapSize + 500 - leftEdge) #final stretch of floor
+    midpoint = statistics.mean([app.mapSize+500, leftEdge])
+    finalStretch = gameObject(length, 100, [midpoint, app.height])
+    app.terrain.append(finalStretch)
+
+def createPlatform(app):
+    for platform in app.platforms:
+        length = random.randint(100,350)
+        ledge = gameObject(length, 30, platform)
+        app.terrain.append(ledge)
 
 def drawTerrain(app, canvas):
     for element in app.terrain:
         (x1, y1, x2, y2) = element.getEdges()
         canvas.create_rectangle(x1 - app.scrollX, y1 - app.scrollY, 
-                                x2 - app.scrollX, y2 - app.scrollY, fill='green')
+                                x2 - app.scrollX, y2 - app.scrollY, fill='brown')
 
 #https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#sidescrollerExamples 
 def sideScroll(app):
-    if app.scrollX <= app.mapSize:
+    if app.scrollX <= app.mapSize + 500:
         if (app.hero.position[0] < app.scrollX + app.scrollMargin):
             app.scrollX = app.hero.position[0] - app.scrollMargin
         if (app.hero.position[0] > app.scrollX + app.width - app.scrollMargin):
             app.scrollX = app.hero.position[0] - app.width + app.scrollMargin
 
 def scroll(app):
-    if (app.hero.position[1] < app.scrollY + app.scrollMarginY):
-        app.scrollY = app.hero.position[1] - app.scrollMarginY
-    if (app.hero.position[1] > app.scrollY + app.height - app.scrollMarginY):
-        app.scrollY = app.hero.position[1] - app.height + app.scrollMarginY
+    if app.hero.position[1] <= app.height:
+        if (app.hero.position[1] < app.scrollY + app.scrollMarginY):
+            app.scrollY = app.hero.position[1] - app.scrollMarginY
+        if (app.hero.position[1] > app.scrollY + app.height - app.scrollMarginY):
+            app.scrollY = app.hero.position[1] - app.height + app.scrollMarginY
 
 def keyPressed(app, event):
     if event.key == 'r':
@@ -108,7 +132,7 @@ def keyPressed(app, event):
             app.reverse = False
     if app.hero.air == False:
         if event.key == "Up":
-            app.hero.speedy += 13
+            app.hero.speedy += 12
             app.hero.air = True
     if event.key == 'q':
         app.lives -= 1
@@ -118,9 +142,8 @@ def keyReleased(app, event):
     if (event.key == 'Left') or (event.key == 'Right'):
         app.hero.speedx = 0
 
-
 def timerFired(app): 
-    if (app.lives <= 0) or (app.timePassed//20 > app.timeLimit):
+    if (app.lives <= 0) or (app.timePassed//40 > app.timeLimit):
         app.gameOver = True
         return
     elif app.damageTaken:
@@ -128,37 +151,43 @@ def timerFired(app):
         if app.deathTimer >= 100:
             app.damageTaken = False
             app.deathTimer = 0
+            app.scrollY = 0
             app.hero.position = [150, 0.7*app.height]
         return
-    elif app.hero.position[0] >= 6150:
+    elif app.hero.position[0] >= (app.mapSize - 250):
         app.victory = True
         return
-    (left, top, right, bottom) = app.hero.getEdges()
+    if app.hero.position[0] > 140:
+        app.scrollY = 10
+    else:
+        app.scrollY = 50
 
+    (left, top, right, bottom) = app.hero.getEdges()
     if left <= 0:
         app.hero.position[0] += 0.1
     else:
         app.hero.move()
         sideScroll(app)
-
     if app.hero.air:
         app.spriteCounter = 1
     elif app.hero.speedx == 0:
         app.spriteCounter = 3
     else:
         app.spriteDelay += 1
-        app.spriteCounter = app.spriteDelay//5 % len(app.sprites)
+        app.spriteCounter = app.spriteDelay//4 % len(app.sprites)
     
     for element in app.terrain:
         if element.collidex(app.hero):
             app.hero.speedx -= 2*app.hero.speedx
+            app.hero.speedy = 0
             app.hero.air = True
     scroll(app)
     app.hero.jump()
     if not app.hero.collidey(app.terrain):
         app.hero.speedy += app.gravity
     if app.hero.position[1] > 1.5*app.height:
-        app.gameOver = True
+        app.lives -= 1
+        app.damageTaken = True
     
     app.timePassed += 1
 
@@ -207,8 +236,8 @@ def redrawAll(app, canvas):
         canvas.create_image(app.hero.position[0] - sx, app.hero.position[1] - sy, 
                             image=ImageTk.PhotoImage(sprite))
         drawTerrain(app, canvas)
+        canvas.create_text(-120 - sx, app.height/3, text='edge of the map bro', font='Impact 16', fill='black')
         canvas.create_text(650, 25, text=f'Time {app.timePassed//40}\tLives x{app.lives}', font='Helvetica 16')
-        
-    
+
 
 runApp(width=800, height=400)

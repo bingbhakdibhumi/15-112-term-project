@@ -25,23 +25,23 @@ class gameObject:
                 return True
         return False
 
-
     def collidey(self, other):
-        for element in other:
-            (ax0, ay0, ax1, ay1) = self.getEdges()
-            (bx0, by0, bx1, by1) = element.getEdges()
-            if ((ax1 > bx0) and (bx1 > ax0)):
-                if ((ay1 > by0) and (by1 > ay0)):
-                    if ay0 < by0:
-                        self.position[1] -= (ay1 - by0)
-                        self.speedy = 0
-                        self.air = False
-                    self.speedy -= 2*self.speedy
-                    return True
+
+        if type(other) == list:
+            for element in other:
+                (ax0, ay0, ax1, ay1) = self.getEdges()
+                (bx0, by0, bx1, by1) = element.getEdges()
+                if ((ax1 > bx0) and (bx1 > ax0)):
+                    if ((ay1 > by0) and (by1 > ay0)):
+                        if ay0 < by0:
+                            self.position[1] -= (ay1 - by0)
+                            self.speedy = 0
+                            self.air = False
+                        self.speedy -= 2*self.speedy
+                        return True
         return False
 
-
-class hero(gameObject):
+class character(gameObject):
     def __init__(self, height, width, position):
         super().__init__(height, width, position)
         self.air = False
@@ -51,9 +51,9 @@ class hero(gameObject):
     def jump(self):
         self.position[1] -= self.speedy
         
-
-class terrain(gameObject):
+class vine(gameObject):
     def __init__(self, height, width, position):
         super().__init__(height, width, position)
-    
+
+
 
