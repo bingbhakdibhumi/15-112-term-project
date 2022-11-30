@@ -22,7 +22,7 @@ def notOverlapping(location, elements, margin):
             return False
     return True
 
-def createPlatforms(start, stop, amount, low, high, jumpHeight):
+def createPlatforms(start, stop, amount, low, high, yRange):
     xPositions = []
     count = 0
     while count < amount:
@@ -31,24 +31,21 @@ def createPlatforms(start, stop, amount, low, high, jumpHeight):
             xPositions.append(location)
             count += 1
     xPositions = sorted(xPositions)
-    result = getPlatformHeight(xPositions, low, high, jumpHeight)
+    result = getPlatformHeight(xPositions, low, high, yRange)
     return result
 
-def getPlatformHeight(locations, low, high, jumpHeight):
+def getPlatformHeight(locations, low, high, yRange):
     result = []
     for i in range (len(locations)):
-        if i == 0:
+        if i%3 == 0:
             result.append([locations[i], low])
-            result.append([locations[i+1], low-jumpHeight])
-        elif i == 1:
-            continue
+        elif i%3 == 1:
+            result.append([locations[i], low-yRange])
         else:
             index = (-1**random.randint(0, 1))
             previousY = result[-1][1]
-            if ((previousY + (jumpHeight*index) < high) or 
-                (previousY + (jumpHeight*index) > low)):
+            if ((previousY + (yRange*index) < high) or 
+                (previousY + (yRange*index) > low)):
                 index = -index
-            result.append([locations[i], previousY + (jumpHeight*index)])
+            result.append([locations[i], previousY + (yRange*index)])
     return result
-
-print(createPlatforms(0, 8000, 10, 230, -100, 140))
