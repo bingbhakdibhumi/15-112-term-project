@@ -1,6 +1,6 @@
 import random
 
-class gameObject:
+class GameObject:
     def __init__(self, width, height, position):
         self.speedx = 0
         self.speedy = 0
@@ -37,10 +37,10 @@ class gameObject:
                             self.speedy = 0
                             self.air = False
                         self.speedy -= 2*self.speedy
-                        return True
+                        return element
         return False
 
-class character(gameObject):
+class Character(GameObject):
     def __init__(self, width, height, position):
         super().__init__(width, height, position)
         self.air = False
@@ -58,23 +58,34 @@ class character(gameObject):
         if (left <= self.leftBound) or (right >= self.rightBound):
             self.speedx = -1*self.speedx
 
-class powerUps(gameObject):
-    def __init__(self, width, height, position, power):
+class PowerUps(Character):
+    def __init__(self, width, height, position, color):
         super().__init__(width, height, position)
         self.held = False
-        self.power = power
+        self.tossed = False
+        self.color = color
     
     def picked(self, other):
-        if self.collidex(self, [other]) or self.collidey(self, other):
-            self.position = other.position
+        if self.collidex(other) or self.collidey([other]):
             return True
 
-class terrain(gameObject):
+    def toss(self, reverse):
+        self.tossed = True
+        if reverse:
+            index = -1
+        else:
+            index = 1
+
+        self.speedy += 5
+        self.speedx += 8*index
+    
+
+class Terrain(GameObject):
     def __init__(self, width, height, position, color):
         super().__init__(width, height, position)
         self.color = color
 
-class vine(gameObject):
+class Vine(GameObject):
     def __init__(self, width, height, position):
         super().__init__(width, height, position)
 

@@ -9,26 +9,30 @@ import statistics
 
 def appStarted(app):
     app.dimensions = (900, 400)
-    app.mapSize = 8000
+    app.mapSize = 8500
     app.scrollX = 0 
     app.scrollY = 0
     app.scrollMargin = 250
     app.scrollMarginY = 70
     app.timerDelay = 5
+    app.maxSpeed = 4
     app.gravity = -0.5 # jump height is 138 with -0.5 gravity and 12 jump
     app.terrain = []
+    app.vines = []
+    app.onVine = False
     app.enemies = []
     app.powerUps = []
+    app.items = []
     app.numberOfHoles = 8
     app.holes = createHoles(1000, app.mapSize-300, app.numberOfHoles, 500) #start, stop, amount, margin
-    app.numberOfPlatforms = 25
+    app.numberOfPlatforms = 20
     app.platformLocations = createPlatforms(1200, app.mapSize-300, app.numberOfPlatforms, 
-                                    240, -70, 130) #start, stop, amount, low, high, yRange
+                                            240, -70, 130) #start, stop, amount, low, high, yRange
     app.platforms = []
-    app.hero = character(55, 40, [app.scrollMargin, 0.7*app.height])
+    app.hero = Character(55, 40, [app.scrollMargin, 0.7*app.height])
     app.lives = 9
     app.timePassed = 0
-    app.timeLimit = 200
+    app.timeLimit = 100
     app.deathTimer = 0
     app.damageTaken = False
     app.gameOver = False
@@ -42,30 +46,58 @@ def appStarted(app):
     # https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#spritesheetsWithCropping
     app.sprites = []
     app.sprites.extend([app.sprite1, app.sprite2, app.sprite3, app.sprite4])
-    app.giant1 = scaleImage(app, app.loadImage('term project/images/pusheen1.png'), (240, 640)) #https://tenor.com/view/pusheen-running-cat-cute-chase-gif-16501897
-    app.giant2 = scaleImage(app, app.loadImage('term project/images/pusheen2.png'), (240, 640))
-    app.giant3 = scaleImage(app, app.loadImage('term project/images/pusheen3.png'), (240, 640))
-    app.giant4 = scaleImage(app, app.loadImage('term project/images/pusheen4.png'), (240, 640))
+    app.giant = False
+    app.giantSprite1 = scaleImage(app, app.loadImage('term project/images/pusheen1.png'), (180, 480)) #https://tenor.com/view/pusheen-running-cat-cute-chase-gif-16501897
+    app.giantSprite2 = scaleImage(app, app.loadImage('term project/images/pusheen2.png'), (180, 480))
+    app.giantSprite3 = scaleImage(app, app.loadImage('term project/images/pusheen3.png'), (180, 480))
+    app.giantSprite4 = scaleImage(app, app.loadImage('term project/images/pusheen4.png'), (180, 480))
     app.giantSprites = []
-    app.giantSprites.extend([app.giant1, app.giant2, app.giant3, app.giant4])
+    app.giantSprites.extend([app.giantSprite1, app.giantSprite2, app.giantSprite3, app.giantSprite4])
+    app.fast = False
+    app.fastSprite1 = scaleImage(app, app.loadImage('term project/images/fast1.png'), (120, 320)) 
+    app.fastSprite2 = scaleImage(app, app.loadImage('term project/images/fast2.png'), (120, 320))
+    app.fastSprite3 = scaleImage(app, app.loadImage('term project/images/fast3.png'), (120, 320))
+    app.fastSprite4 = scaleImage(app, app.loadImage('term project/images/fast4.png'), (120, 320))
+    app.fastSprites = []
+    app.fastSprites.extend([app.fastSprite1, app.fastSprite2, app.fastSprite3, app.fastSprite4])
     app.reversed1 = app.sprite1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     app.reversed2 = app.sprite2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     app.reversed3 = app.sprite3.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     app.reversed4 = app.sprite4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     app.reversedSprites = []
     app.reversedSprites.extend([app.reversed1, app.reversed2, app.reversed3, app.reversed4])
-    app.giantReversed1 = app.giant1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    app.giantReversed2 = app.giant2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    app.giantReversed3 = app.giant3.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    app.giantReversed4 = app.giant4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantReversed1 = app.giantSprite1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantReversed2 = app.giantSprite2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantReversed3 = app.giantSprite3.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantReversed4 = app.giantSprite4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     app.reversedGiantSprites = []
     app.reversedGiantSprites.extend([app.giantReversed1, app.giantReversed2, app.giantReversed3, app.giantReversed4])
+    app.fastReversed1 = app.fastSprite1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.fastReversed2 = app.fastSprite2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.fastReversed3 = app.fastSprite3.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.fastReversed4 = app.fastSprite4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.reversedFastSprites = []
+    app.reversedFastSprites.extend([app.fastReversed1, app.fastReversed2, app.fastReversed3, app.fastReversed4])
+    app.giantFast1 = scaleImage(app, app.loadImage('term project/images/fast1.png'), (180, 480)) #https://tenor.com/view/pusheen-running-cat-cute-chase-gif-16501897
+    app.giantFast2 = scaleImage(app, app.loadImage('term project/images/fast2.png'), (180, 480))
+    app.giantFast3 = scaleImage(app, app.loadImage('term project/images/fast3.png'), (180, 480))
+    app.giantFast4 = scaleImage(app, app.loadImage('term project/images/fast4.png'), (180, 480))
+    app.giantFastSprites = []
+    app.giantFastSprites.extend([app.giantFast1, app.giantFast2, app.giantFast3, app.giantFast4])
+    app.giantFastReversed1 = app.giantFast1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantFastReversed2 = app.giantFast2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantFastReversed3 = app.giantFast3.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.giantFastReversed4 = app.giantFast4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    app.reversedGiantFast = []
+    app.reversedGiantFast.extend([app.giantFastReversed1, app.giantFastReversed2, app.giantFastReversed3, app.giantFastReversed4])
     app.reverse = False
     app.spriteCounter = 0
     app.spriteDelay = 0
     addTerrain(app)
+    addPowerUps(app)
     createFloor(app)
     createPlatform(app)
+    createVines(app)
     createEnemies(app)
 
 # advanced Tkinter mini-lecture https://scs.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=f19a16b4-d382-4021-b9e7-af43003eb620
@@ -85,44 +117,60 @@ def drawImage(app, canvas, image, cx, cy):
 
 # add terrain manually here
 def addTerrain(app):
-    testLedge = terrain(400, 30, [550, 250], 'brown')
+    testLedge = Terrain(400, 30, [550, 250], 'brown')
     app.terrain.append(testLedge)
-    wall = terrain(100, 300, [800, app.height-150], 'brown')
+    wall = Terrain(100, 300, [800, app.height-150], 'brown')
     app.terrain.append(wall)
-    pole = terrain(40, 300, [app.mapSize-200, app.height-150], 'brown')
+    pole = Terrain(40, 300, [app.mapSize-200, app.height-150], 'brown')
     app.terrain.append(pole)
+    vine = Terrain(10, app.height*2, [200, -125], 'chartreuse')
+    app.vines.append(vine)
 
 #add power ups manually here
 def addPowerUps(app):
-    test1 = powerUps(50, 50, [800, app.height-230])
-    app.powerUps.add(test1)
+    test1 = PowerUps(30, 30, [800, app.height-320], 'blue')
+    test2 = PowerUps(30, 30, [1000, app.height-60], 'yellow')
+    test3 = PowerUps(32, 32, [200, app.height-60], 'black')
+    app.powerUps.append(test1)
+    app.powerUps.append(test2)
+    app.powerUps.append(test3)
 
 def createFloor(app):
     leftEdge = -200
     for hole in app.holes:
         length = (hole - 100 - leftEdge)
         midpoint = statistics.mean([leftEdge, hole-100])
-        floor = terrain(length, 100, [midpoint, app.height+20], 'green')
+        floor = Terrain(length, 100, [midpoint, app.height+20], 'green')
         app.terrain.append(floor)
         leftEdge = (hole + 100)
     length = (app.mapSize + 500 - leftEdge) #final stretch of floor
     midpoint = statistics.mean([app.mapSize+500, leftEdge])
-    finalStretch = terrain(length, 100, [midpoint, app.height+20], 'green')
+    finalStretch = Terrain(length, 100, [midpoint, app.height+20], 'green')
     app.terrain.append(finalStretch)
 
 def createPlatform(app):
     for platform in app.platformLocations:
         length = random.randint(270,350)
-        ledge = terrain(length, 25, platform, 'brown')
+        height = random.randint(15, 35)
+        ledge = Terrain(length, height, platform, 'brown')
         app.platforms.append(ledge)
         app.terrain.append(ledge)
+
+def createVines(app):
+    locations = []
+    for i in range(10):
+        locations.append(app.holes[random.randint(0, len(app.holes)-1)])
+    for x in locations:
+        vine = Terrain(10, app.height*2, [x, -150], 'chartreuse')
+        app.vines.append(vine)
 
 def createEnemies(app):
     for platform in app.platforms:
         adjusted = copy.copy(platform.position)
-        adjusted[1] -= 30
-        enemy = character(30, 30, adjusted)
+        adjusted[1] -= 50
+        enemy = Character(35, 35, adjusted)
         enemy.speedx = random.randint(2, 4)
+        enemy.speedy = 5
         (left, top, right, bottom) = platform.getEdges()
         enemy.leftBound, enemy.rightBound = left, right
         app.enemies += [enemy]
@@ -132,7 +180,10 @@ def drawTerrain(app, canvas):
         (x1, y1, x2, y2) = element.getEdges()
         canvas.create_rectangle(x1 - app.scrollX, y1 - app.scrollY, 
                                 x2 - app.scrollX, y2 - app.scrollY, fill=element.color)
-
+    for element in app.vines:
+        (x1, y1, x2, y2) = element.getEdges()
+        canvas.create_rectangle(x1 - app.scrollX, y1 - app.scrollY, 
+                                x2 - app.scrollX, y2 - app.scrollY, fill=element.color)
 def drawEnemies(app, canvas):
     for enemy in app.enemies:
         (x1, y1, x2, y2) = enemy.getEdges()
@@ -143,7 +194,7 @@ def drawPowerUps(app, canvas):
     for powerUp in app.powerUps:
         (x1, y1, x2, y2) = powerUp.getEdges()
         canvas.create_oval(x1 - app.scrollX, y1 - app.scrollY, 
-                                x2 - app.scrollX, y2 - app.scrollY, fill='blue')       
+                                x2 - app.scrollX, y2 - app.scrollY, fill=powerUp.color)       
 
 #https://www.cs.cmu.edu/~112/notes/notes-animations-part4.html#sidescrollerExamples 
 def sideScroll(app):
@@ -167,7 +218,14 @@ def keyPressed(app, event):
         if event.key == 't':
             app.startGame = False
     else:
-        if abs(app.hero.speedx) < 4:
+        if app.onVine:
+            if event.key == 'Up':
+                app.hero.position[1] -= 2
+            elif event.key == 'Down':
+                app.hero.position[1] += 2
+            if (event.key == 'Left') or (event.key == 'Right'):
+                app.onVine = False
+        if abs(app.hero.speedx) < app.maxSpeed:
             if event.key == 'Left':
                 app.hero.speedx -= 2.5
                 app.reverse = True
@@ -178,6 +236,10 @@ def keyPressed(app, event):
             if event.key == "Up":
                 app.hero.speedy += 12
                 app.hero.air = True
+        if len(app.items) > 0:
+            if event.key == 'f':
+                app.items[0].toss(app.reverse)
+
         if event.key == 'q':
             app.lives -= 1
             app.damageTaken = True
@@ -195,6 +257,16 @@ def timerFired(app):
             app.deathTimer += 1
             if app.deathTimer >= 100:
                 app.damageTaken = False
+                if app.giant:
+                    app.giant = False
+                    app.hero.width /= 1.5
+                    app.hero.height /= 1.5
+                if app.fast:
+                    app.fast = False
+                    app.maxSpeed = 4
+                for powerUp in app.powerUps:
+                    if powerUp.held:
+                        app.powerUps.remove(powerUp)
                 app.deathTimer = 0
                 app.scrollY = 0
                 app.scrollX = 0
@@ -208,8 +280,28 @@ def timerFired(app):
             enemy.boundary()
             enemy.move()
         for powerUp in app.powerUps:
-            if powerUp.picked():
-                pass
+            if powerUp.picked(app.hero):
+                if powerUp.color == 'black':
+                    powerUp.held = True
+                    app.items.append(powerUp)
+                else:
+                    app.powerUps.remove(powerUp)
+                    if powerUp.color == 'blue':    
+                        app.giant = True
+                        app.hero.width *= 1.5
+                        app.hero.height *= 1.3
+                    elif powerUp.color == 'yellow':    
+                        app.fast = True
+                        app.maxSpeed = 7
+            if powerUp.tossed:
+                powerUp.speedy += app.gravity
+                powerUp.move()
+                powerUp.jump()
+                if powerUp.collidey(app.terrain):
+                    app.powerUps.remove(powerUp)
+            elif powerUp.held:
+                powerUp.position[0] = app.hero.position[0]
+                powerUp.position[1] = app.hero.position[1] - app.hero.height
 
         (left, top, right, bottom) = app.hero.getEdges()
         if left <= 0:
@@ -217,7 +309,9 @@ def timerFired(app):
         else:
             app.hero.move()
             sideScroll(app)
-        if app.hero.air:
+        if app.onVine:
+            app.spriteCounter = 0
+        elif app.hero.air:
             app.spriteCounter = 1
         elif app.hero.speedx == 0:
             app.spriteCounter = 3
@@ -230,10 +324,24 @@ def timerFired(app):
                 app.hero.speedx -= 2*app.hero.speedx
                 app.hero.speedy = 0
                 app.hero.air = True
+        for vine in app.vines:
+            if vine.collidex(app.hero) and app.hero.air:
+                app.hero.speedx = 0
+                app.onVine = True
         for enemy in app.enemies:
+            if ((abs(app.hero.position[0] - enemy.position[0]) < 400) and 
+            (abs(app.hero.position[1] - enemy.position[1]) < 50)):
+                if app.timePassed % 45 == 0:
+                    enemy.speedy += 6
             if enemy.collidex(app.hero):
-                app.lives -= 1
-                app.damageTaken = True
+                if not app.giant:
+                    app.lives -= 1
+                    app.damageTaken = True
+                else:
+                    app.enemies.remove(enemy)
+                    app.giant = False
+                    app.hero.height /= 1.3
+                    app.hero.width /= 1.5
                 return
             elif enemy.collidey([app.hero]):
                 app.enemies.remove(enemy)
@@ -241,9 +349,19 @@ def timerFired(app):
                 app.hero.air = True
                 app.hero.jump()
         scroll(app)
+        if app.onVine:
+            app.gravity = 0
+            app.air = False
+            app.hero.speedy = 0
+        else:
+            app.gravity = -0.5
         app.hero.jump()
         if not app.hero.collidey(app.terrain):
             app.hero.speedy += app.gravity
+        for enemy in app.enemies:
+            enemy.jump()
+            if not enemy.collidey(app.terrain):
+                enemy.speedy += app.gravity
         if app.hero.position[1] > 1.5*app.height:
             app.lives -= 1
             app.damageTaken = True
@@ -270,7 +388,7 @@ def youDiedScreen(app, canvas):
         canvas.create_text(app.width/2, app.height/2, text=f'You Died! \nx{app.lives} lives left', 
                            font='Impact 32', fill='white')
     else:  
-        canvas.create_text(app.width/2, app.height/2, text=f'You Died! \nx{app.lives} life left', 
+        canvas.create_text(app.width/2, app.height/2, text=f'You Died \nx{app.lives} life left', 
                            font='Impact 32', fill='white')
 
 def gameOverScreen(app, canvas):
@@ -296,15 +414,29 @@ def redrawAll(app, canvas):
         drawBackground(app, canvas)
         sx = app.scrollX
         sy = app.scrollY
-        if app.reverse:
+        if app.giant and app.fast:
+            if app.reverse: 
+                sprite = app.reversedGiantFast[app.spriteCounter]
+            else:
+                sprite = app.giantFastSprites[app.spriteCounter]
+        elif app.giant and app.reverse:
+            sprite = app.reversedGiantSprites[app.spriteCounter]
+        elif app.fast and app.reverse:
+            sprite = app.reversedFastSprites[app.spriteCounter]
+        elif app.giant:
+            sprite = app.giantSprites[app.spriteCounter]
+        elif app.fast:
+            sprite = app.fastSprites[app.spriteCounter]
+        elif app.reverse:
             sprite = app.reversedSprites[app.spriteCounter]
         else:
             sprite = app.sprites[app.spriteCounter]
         (left, top, right, bottom) = app.hero.getEdges()
-        canvas.create_rectangle(left - sx, top - sy, right - sx, bottom - sy)
+        canvas.create_rectangle(left - sx, top - sy, right - sx, bottom - sy, outline='skyblue')
         canvas.create_image(app.hero.position[0] - sx, app.hero.position[1] - sy, 
                             image=ImageTk.PhotoImage(sprite))
         drawTerrain(app, canvas)
+        drawPowerUps(app, canvas)
         drawEnemies(app, canvas)
         canvas.create_text(-130 - sx, app.height/3, text='edge of the map bro', font='Impact 16', fill='black')
         canvas.create_text(650, 25, text=f'Time {app.timePassed//40}\tLives x{app.lives}', font='Helvetica 16')
