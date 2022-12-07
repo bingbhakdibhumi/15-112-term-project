@@ -37,7 +37,7 @@ class GameObject:
                             self.speedy = 0
                             self.air = False
                         self.speedy -= 2*self.speedy
-                        return element
+                        return True
         return False
 
 class Character(GameObject):
@@ -58,6 +58,13 @@ class Character(GameObject):
         if (left <= self.leftBound) or (right >= self.rightBound):
             self.speedx = -1*self.speedx
 
+    def shoot(self, reverse):
+        if reverse:
+            index = -1
+        else:
+            index = 1
+        self.speedx += 12*index
+
 class PowerUps(Character):
     def __init__(self, width, height, position, color):
         super().__init__(width, height, position)
@@ -75,19 +82,15 @@ class PowerUps(Character):
             index = -1
         else:
             index = 1
-
         self.speedy += 5
-        self.speedx += 8*index
-    
+        self.speedx += 7*index
 
+    
 class Terrain(GameObject):
     def __init__(self, width, height, position, color):
         super().__init__(width, height, position)
         self.color = color
 
-class Vine(GameObject):
-    def __init__(self, width, height, position):
-        super().__init__(width, height, position)
 
 
 
